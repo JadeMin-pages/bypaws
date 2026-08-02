@@ -1,4 +1,4 @@
-package bypaws
+package main
 
 import (
 	"bypaws/src/web"

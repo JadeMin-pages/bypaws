@@ -1,10 +1,10 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"encoding/json"
 )
 
 type Proxy struct {
@@ -13,11 +13,7 @@ type Proxy struct {
 	Protocol	string	`json:"protocol"`
 }
 
-const (
-	proxyListURL = "https://raw.githubusercontent.com/proxifly/free-proxy-list/refs/heads/main/proxies/countries/JP/data.json"
-	targetSite = "https://e621.net/"
-	port = ":8080"
-)
+const proxyListURL = "https://raw.githubusercontent.com/proxifly/free-proxy-list/refs/heads/main/proxies/countries/JP/data.json"
 
 // ponytail: 검증 없이 목록의 첫 번째 프록시를 즉시 반환. 해당 IP가 죽어있으면 접속 에러 발생 (업그레이드: 연결 테스트/순회 추가).
 func GetFirstProxy() (*url.URL, error) {

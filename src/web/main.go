@@ -7,6 +7,8 @@ import (
 	"net/url"
 )
 
+const targetSite = "https://e621.net/"
+
 func Run() {
 	target, _ := url.Parse(targetSite)
 
