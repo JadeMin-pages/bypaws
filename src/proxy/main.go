@@ -1,4 +1,4 @@
-package web
+package proxy
 
 import (
 	"fmt"
@@ -24,7 +24,8 @@ func GetFirstProxy() (*url.URL, error) {
 	defer resp.Body.Close()
 
 	var list []Proxy
-	if err := json.NewDecoder(resp.Body).Decode(&list); (err != nil || len(list) == 0) {
+	err = json.NewDecoder(resp.Body).Decode(&list)
+	if err != nil || len(list) == 0 {
 		return nil, fmt.Errorf("프록시 목록이 비어있거나 파싱 실패")
 	}
 
