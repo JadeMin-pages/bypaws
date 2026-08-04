@@ -12,12 +12,12 @@ import (
 )
 
 const targetSite = "https://e621.net/"
-
-var allowedPaths = []string{
+var whitelist = []string{
 	"/favicon.ico",
-	"/vite",
-	"/images",
-	"/manifest.json",
+	"/vite/assets/",
+	"/images/counter/",
+
+	"/tags/autocomplete.json",
 
 	"/posts",
 	"/popular",
@@ -26,7 +26,7 @@ var allowedPaths = []string{
 func Run() {
 	targetURL, _ := url.Parse(targetSite)
 
-	proxyURL, err := proxy.GetFirstProxy()
+	proxyURL, err := proxy.GetSingleProxy()
 	if err != nil {
 		log.Fatalf("프록시 로드 실패: %v", err)
 	}
@@ -34,33 +34,36 @@ func Run() {
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	proxy.Transport = &http.Transport{
 		Proxy: http.ProxyURL(proxyURL),
+		DisableKeepAlives: true,
 	}
 
-	http.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
-		isAllowed := (req.URL.Path == "/")
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		reqURL := request.URL
 
-		if !isAllowed {
-			for _, path := range allowedPaths {
-				if strings.HasPrefix(req.URL.Path, path) {
+		if reqURL.Path != "/" {
+			isAllowed := false
+
+			for _, allowedPath := range whitelist {
+				if strings.HasPrefix(reqURL.Path, allowedPath) {
 					isAllowed = true
 					break
 				}
 			}
+
+			if !isAllowed {
+				http.Error(
+					writer,
+					"해당 페이지는 관리자에 의해 임시 차단되어 있습니다. (403 Forbidden)",
+					http.StatusForbidden,
+				)
+				return
+			}
 		}
 
-		if !isAllowed {
-			http.Error(
-				writer,
-				"해당 페이지는 접근이 불가능합니다.",
-				http.StatusForbidden,
-			)
-			return
-		}
-
-		req.Host = targetURL.Host
-		proxy.ServeHTTP(writer, req)
+		request.Host = targetURL.Host
+		proxy.ServeHTTP(writer, request)
 	})
 
-	log.Printf("http://localhost:8080 -> %s (via %s)", targetSite, proxyURL)
+	log.Printf("Server running on http://localhost:8080 via %s", proxyURL)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
