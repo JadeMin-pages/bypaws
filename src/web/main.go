@@ -53,7 +53,7 @@ func Run() {
 			if !isAllowed {
 				http.Error(
 					writer,
-					"해당 페이지는 관리자에 의해 임시 차단되어 있습니다. (403 Forbidden)",
+					"해당 페이지는 관리자에 의해 임시 차단되어 있습니다.",
 					http.StatusForbidden,
 				)
 				return
