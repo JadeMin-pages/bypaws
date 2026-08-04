@@ -43,7 +43,7 @@ func GetSingleProxy() (*url.URL, error) {
 	defer response.Body.Close()
 
 	scanner := bufio.NewScanner(response.Body)
-	log.Println("========== 프록시 검증 시작 ==========")
+	log.Println("========== 프록시 유효성 검증 시작 ==========")
 	for scanner.Scan() {
 		rawURL := strings.TrimSpace(scanner.Text())
 
@@ -52,10 +52,10 @@ func GetSingleProxy() (*url.URL, error) {
 			continue
 		}
 
-		log.Printf("프록시 유효성 검증 중... (%s)", parsedURL.String())
+		log.Printf("검증 중... (%s)", parsedURL.String())
 		if testProxyConnection(parsedURL) {
-			log.Printf("프록시 유효성 검증 성공 (%s)", parsedURL.String())
-			log.Println("========== 프록시 검증 종료 ==========")
+			log.Println("검증 성공")
+			log.Println("========== 프록시 유효성 검증 종료 ==========")
 			return parsedURL, nil
 		}
 	}
