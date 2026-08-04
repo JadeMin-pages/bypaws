@@ -1,38 +1,68 @@
 package proxy
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
-	"encoding/json"
+	"strings"
+	"time"
 )
 
-type Proxy struct {
-	IP			string	`json:"ip"`
-	Port		int		`json:"port"`
-	Protocol	string	`json:"protocol"`
+const proxyListURL = "https://raw.githubusercontent.com/proxifly/free-proxy-list/refs/heads/main/proxies/countries/JP/data.txt"
+
+func testProxyConnection(proxyURL *url.URL) bool {
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+			DisableKeepAlives: true,
+		},
+		Timeout: 3 * time.Second,
+	}
+
+	req, err := http.NewRequest("HEAD", "https://e621.net/", nil)
+	if err != nil {
+		return false
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode > 0
 }
 
-const proxyListURL = "https://raw.githubusercontent.com/proxifly/free-proxy-list/refs/heads/main/proxies/countries/JP/data.json"
-
-// ponytail: 검증 없이 목록의 첫 번째 프록시를 즉시 반환. 해당 IP가 죽어있으면 접속 에러 발생 (업그레이드: 연결 테스트/순회 추가).
-func GetFirstProxy() (*url.URL, error) {
-	resp, err := http.Get(proxyListURL)
+func GetSingleProxy() (*url.URL, error) {
+	response, err := http.Get(proxyListURL)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
-	var list []Proxy
-	err = json.NewDecoder(resp.Body).Decode(&list)
-	if err != nil || len(list) == 0 {
-		return nil, fmt.Errorf("프록시 목록이 비어있거나 파싱 실패")
+	scanner := bufio.NewScanner(response.Body)
+	log.Println("========== 프록시 검증 시작 ==========")
+	for scanner.Scan() {
+		rawURL := strings.TrimSpace(scanner.Text())
+
+		parsedURL, err := url.Parse(rawURL)
+		if err != nil {
+			continue
+		}
+
+		log.Printf("프록시 유효성 검증 중... (%s)", parsedURL.String())
+		if testProxyConnection(parsedURL) {
+			log.Printf("프록시 유효성 검증 성공 (%s)", parsedURL.String())
+			log.Println("========== 프록시 검증 종료 ==========")
+			return parsedURL, nil
+		}
 	}
 
-	return url.Parse(
-		fmt.Sprintf(
-			"%s://%s:%d",
-			list[0].Protocol, list[0].IP, list[0].Port,
-		),
-	)
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return nil, fmt.Errorf("사용 가능한 SOCKS5 프록시가 목록에 없음")
 }
