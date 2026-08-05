@@ -16,7 +16,6 @@ func testProxyConnection(proxyURL *url.URL) bool {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),
-			DisableKeepAlives: true,
 		},
 		Timeout: 3 * time.Second,
 	}

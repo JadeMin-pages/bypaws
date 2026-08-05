@@ -34,7 +34,6 @@ func Run() {
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	proxy.Transport = &http.Transport{
 		Proxy: http.ProxyURL(proxyURL),
-		DisableKeepAlives: true,
 	}
 
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
