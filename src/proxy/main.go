@@ -54,10 +54,10 @@ func GetSingleProxy() (*url.URL, error) {
 		log.Printf("검증 중... (%s)", parsedURL.String())
 		if testProxyConnection(parsedURL) {
 			log.Println("검증 성공")
+			log.Println("========== 프록시 유효성 검증 종료 ==========")
 			return parsedURL, nil
 		}
 	}
-	log.Println("========== 프록시 유효성 검증 종료 ==========")
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
